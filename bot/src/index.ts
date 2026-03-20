@@ -1,4 +1,4 @@
-import { Bot, InlineKeyboard } from "grammy";
+import { Bot, GrammyError, InlineKeyboard } from "grammy";
 import { env } from "./env";
 
 const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
@@ -52,4 +52,14 @@ async function bootstrap() {
   });
 }
 
-void bootstrap();
+void bootstrap().catch((error: unknown) => {
+  if (error instanceof GrammyError && error.method === "getUpdates" && error.error_code === 409) {
+    console.error(
+      "Telegram bot polling conflict: another bot instance is already running. Stop all duplicate bot processes or deployments that use the same TELEGRAM_BOT_TOKEN."
+    );
+    return;
+  }
+
+  console.error("Telegram bot startup failed", error);
+  process.exit(1);
+});

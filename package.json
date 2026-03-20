@@ -8,7 +8,7 @@
     "build:backend": "pnpm --filter @habit-tracker/backend build",
     "build:frontend": "pnpm --filter @habit-tracker/frontend build",
     "build:bot": "pnpm --filter @habit-tracker/bot build",
-    "start": "concurrently -k -n backend,bot -c magenta,green \"pnpm start:backend\" \"pnpm start:bot\"",
+    "start": "concurrently -n backend,bot -c magenta,green \"pnpm start:backend\" \"pnpm start:bot\"",
     "start:backend": "pnpm --filter @habit-tracker/backend start",
     "start:bot": "pnpm --filter @habit-tracker/bot start",
     "typecheck": "pnpm -r typecheck",
