@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum HabitDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model User {
+  id         String       @id @default(cuid())
+  telegramId String       @unique
+  firstName  String
+  username   String?
+  photoUrl   String?
+  habits     Habit[]
+  sleepLogs  SleepEntry[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+}
+
+model Habit {
+  id            String            @id @default(cuid())
+  userId        String
+  title         String
+  icon          String
+  area          String
+  difficulty    HabitDifficulty
+  targetMinutes Int?
+  isArchived    Boolean           @default(false)
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  completions   HabitCompletion[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([userId, isArchived])
+}
+
+model HabitCompletion {
+  id        String   @id @default(cuid())
+  habitId   String
+  date      DateTime @db.Date
+  completed Boolean  @default(true)
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([habitId, date])
+  @@index([habitId, date])
+}
+
+model SleepEntry {
+  id              String   @id @default(cuid())
+  userId          String
+  date            DateTime @db.Date
+  bedtime         String
+  wakeTime        String
+  durationMinutes Int
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}

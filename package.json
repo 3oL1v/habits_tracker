@@ -1,0 +1,26 @@
+{
+  "name": "habit-tracker-mini-app",
+  "private": true,
+  "packageManager": "pnpm@10.8.1",
+  "scripts": {
+    "dev": "concurrently -n backend,frontend,bot -c magenta,cyan,green \"pnpm --filter @habit-tracker/backend dev\" \"pnpm --filter @habit-tracker/frontend dev\" \"pnpm --filter @habit-tracker/bot dev\"",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint .",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f postgres",
+    "prisma:generate": "pnpm --filter @habit-tracker/backend prisma:generate",
+    "prisma:migrate": "pnpm --filter @habit-tracker/backend prisma:migrate",
+    "prisma:studio": "pnpm --filter @habit-tracker/backend prisma:studio",
+    "seed": "pnpm --filter @habit-tracker/backend seed",
+    "setup": "node scripts/setup.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.23.0",
+    "concurrently": "^9.1.2",
+    "eslint": "^9.23.0",
+    "globals": "^16.0.0",
+    "typescript-eslint": "^8.28.0"
+  }
+}
