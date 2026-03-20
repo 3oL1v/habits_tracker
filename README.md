@@ -328,16 +328,21 @@ This repository is a monorepo. The root package now exposes a default production
 pnpm start
 ```
 
-By default that starts the backend service:
+By default that starts both long-running production processes:
 
 ```bash
-pnpm --filter @habit-tracker/backend start
+pnpm start
 ```
+
+Under the hood:
+
+- backend: `pnpm start:backend`
+- bot: `pnpm start:bot`
 
 Useful Railway commands by service:
 
 - backend build: `pnpm build:backend`
-- backend start: `pnpm start`
+- backend start only: `pnpm start:backend`
 - bot build: `pnpm build:bot`
 - bot start: `pnpm start:bot`
 - frontend build: `pnpm build:frontend`
