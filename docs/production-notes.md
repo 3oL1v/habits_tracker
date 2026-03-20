@@ -1,11 +1,11 @@
 # Production Notes
 
-## Suggested Deployment Topology
+## Recommended Railway Topology
 
-- `Frontend`: static hosting over HTTPS
-- `Backend`: Node service running Fastify
-- `Bot`: separate long-running polling worker
-- `Database`: PostgreSQL
+- `Single service`: Fastify backend + Telegram bot + built frontend Mini App
+- `Single PostgreSQL service`
+
+The backend now serves `app/frontend/dist`, so Railway does not need a separate frontend service unless you intentionally want a split deployment.
 
 ## Environment
 
@@ -15,27 +15,41 @@ Set at minimum:
 - `JWT_SECRET`
 - `TELEGRAM_BOT_TOKEN`
 - `WEBAPP_URL`
-- `FRONTEND_ORIGIN`
-- `VITE_API_BASE_URL`
+- `FRONTEND_ORIGIN` (optional when it matches `WEBAPP_URL`)
+- `VITE_API_BASE_URL` (optional for same-origin `/api`)
+
+Recommended single-service values:
+
+- `WEBAPP_URL=https://your-backend-domain.up.railway.app`
+- `FRONTEND_ORIGIN` may be omitted and will fall back to `WEBAPP_URL` origin
+- `VITE_API_BASE_URL` may be omitted and already defaults to `/api`
+
+## Build And Start
+
+Use:
+
+1. `pnpm build`
+2. `pnpm start`
+
+This starts:
+
+- Fastify API on the Railway service port
+- grammY bot in the same service
+- static Mini App delivery from the backend process
 
 ## Backend
 
 - Run Prisma migrations before starting the API
-- Restrict `FRONTEND_ORIGIN` to the deployed frontend origin
 - Keep `JWT_SECRET` long and random
 - Keep `ALLOW_DEV_AUTH=false` in production unless you explicitly need local-only browser auth
-
-## Frontend
-
-- Must be served over `HTTPS`
-- `VITE_API_BASE_URL` should point to the deployed backend API prefix, for example `https://api.example.com/api`
-- Telegram opens the Mini App URL directly, so the final frontend URL should be stable
+- If you keep a split frontend deployment, set `FRONTEND_ORIGIN` explicitly to that frontend origin
 
 ## Telegram Bot
 
 - The bot process should boot after `WEBAPP_URL` is correct
 - On startup it sets `/start`, `/app`, and the chat menu button
-- If you change `WEBAPP_URL`, restart the bot so menu button settings are refreshed
+- If you change `WEBAPP_URL`, restart the service so menu button settings are refreshed
+- Only one running bot instance may use the same `TELEGRAM_BOT_TOKEN`
 
 ## Database
 
@@ -45,12 +59,10 @@ Set at minimum:
 
 ## Release Flow
 
-1. Build backend, frontend, and bot
-2. Deploy backend
-3. Run Prisma migrations against production DB
-4. Deploy frontend
-5. Update `WEBAPP_URL` if needed
-6. Start or restart the bot worker
+1. Build and deploy the single Railway service
+2. Run Prisma migrations against production DB
+3. Verify `/health`
+4. Open the Telegram Mini App through `/start`
 
 ## Operational Notes
 

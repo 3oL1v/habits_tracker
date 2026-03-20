@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
@@ -15,6 +17,64 @@ import { sleepRoutes } from './routes/sleep';
 interface SessionPayload {
   userId: string;
   telegramId: string;
+}
+
+const FRONTEND_DIST_DIR = path.resolve(process.cwd(), '../frontend/dist');
+const FRONTEND_INDEX_PATH = path.join(FRONTEND_DIST_DIR, 'index.html');
+const FRONTEND_ASSETS_DIR = path.join(FRONTEND_DIST_DIR, 'assets');
+
+function getContentType(filePath: string): string {
+  switch (path.extname(filePath).toLowerCase()) {
+    case '.html':
+      return 'text/html; charset=utf-8';
+    case '.js':
+      return 'application/javascript; charset=utf-8';
+    case '.css':
+      return 'text/css; charset=utf-8';
+    case '.json':
+      return 'application/json; charset=utf-8';
+    case '.svg':
+      return 'image/svg+xml';
+    case '.png':
+      return 'image/png';
+    case '.jpg':
+    case '.jpeg':
+      return 'image/jpeg';
+    case '.webp':
+      return 'image/webp';
+    case '.ico':
+      return 'image/x-icon';
+    case '.map':
+      return 'application/json; charset=utf-8';
+    case '.txt':
+      return 'text/plain; charset=utf-8';
+    default:
+      return 'application/octet-stream';
+  }
+}
+
+function resolveSafePath(baseDir: string, relativePath: string): string | null {
+  const resolvedPath = path.resolve(baseDir, relativePath);
+  const normalizedBaseDir = path.resolve(baseDir) + path.sep;
+
+  if (resolvedPath === path.resolve(baseDir) || resolvedPath.startsWith(normalizedBaseDir)) {
+    return resolvedPath;
+  }
+
+  return null;
+}
+
+function sendStaticFile(reply: { code: (code: number) => { send: (payload: unknown) => void }; type: (value: string) => void; header: (name: string, value: string) => void; send: (payload: unknown) => unknown }, filePath: string, immutable = false) {
+  if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+    reply.code(404).send({
+      message: 'Not found'
+    });
+    return;
+  }
+
+  reply.type(getContentType(filePath));
+  reply.header('Cache-Control', immutable ? 'public, max-age=31536000, immutable' : 'no-cache');
+  reply.send(fs.createReadStream(filePath));
 }
 
 export function buildApp() {
@@ -70,6 +130,51 @@ export function buildApp() {
     }
   );
 
+  if (fs.existsSync(FRONTEND_INDEX_PATH)) {
+    app.get('/assets/*', async (request, reply) => {
+      const params = request.params as { '*': string };
+      const assetPath = resolveSafePath(FRONTEND_ASSETS_DIR, params['*']);
+
+      if (!assetPath) {
+        reply.code(404).send({
+          message: 'Asset not found'
+        });
+        return;
+      }
+
+      sendStaticFile(reply, assetPath, true);
+    });
+
+    app.get('/', async (_request, reply) => {
+      sendStaticFile(reply, FRONTEND_INDEX_PATH);
+    });
+
+    app.get('/index.html', async (_request, reply) => {
+      sendStaticFile(reply, FRONTEND_INDEX_PATH);
+    });
+
+    app.get('/*', async (request, reply) => {
+      const requestPath = (request.raw.url ?? '/').split('?')[0];
+
+      if (requestPath === '/health' || requestPath.startsWith(config.API_PREFIX)) {
+        void reply.callNotFound();
+        return;
+      }
+
+      const relativePath = requestPath.replace(/^\/+/, '');
+      const candidatePath = relativePath ? resolveSafePath(FRONTEND_DIST_DIR, relativePath) : null;
+
+      if (candidatePath && fs.existsSync(candidatePath) && fs.statSync(candidatePath).isFile()) {
+        sendStaticFile(reply, candidatePath, candidatePath.includes(`${path.sep}assets${path.sep}`));
+        return;
+      }
+
+      sendStaticFile(reply, FRONTEND_INDEX_PATH);
+    });
+  } else {
+    app.log.warn(`Frontend dist not found at ${FRONTEND_INDEX_PATH}. Only API routes will be available.`);
+  }
+
   app.setErrorHandler((error, request, reply) => {
     request.log.error(error);
 
@@ -111,4 +216,3 @@ export function buildApp() {
 
   return app;
 }
-

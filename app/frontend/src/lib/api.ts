@@ -87,7 +87,7 @@ export interface SleepPayload {
 
 const API_BASE_URL: string = typeof import.meta.env.VITE_API_BASE_URL === "string"
   ? import.meta.env.VITE_API_BASE_URL
-  : "http://localhost:3001/api";
+  : "/api";
 let authToken: string | null = null;
 
 export function setAuthToken(token: string | null) {
@@ -180,4 +180,5 @@ export const api = {
     });
   }
 };
+
 

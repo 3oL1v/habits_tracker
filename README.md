@@ -117,7 +117,7 @@ Copy `.env.example` to `.env` and fill the values.
 
 - `PORT`
 - `API_PREFIX`
-- `FRONTEND_ORIGIN`
+- `FRONTEND_ORIGIN` (optional when it matches `WEBAPP_URL`)
 - `JWT_SECRET`
 - `TELEGRAM_BOT_TOKEN`
 - `TELEGRAM_AUTH_MAX_AGE_SECONDS`
@@ -128,7 +128,7 @@ Copy `.env.example` to `.env` and fill the values.
 
 ### Frontend
 
-- `VITE_API_BASE_URL`
+- `VITE_API_BASE_URL` (optional for same-origin `/api`)
 - `VITE_APP_NAME`
 - `VITE_DEV_AUTH`
 
@@ -252,7 +252,7 @@ If you already have a token, paste it here. Do not commit the real token.
 In the same root `.env` file set:
 
 ```env
-WEBAPP_URL=https://your-mini-app-domain.example
+WEBAPP_URL=https://your-single-service-domain.example
 ```
 
 Important:
@@ -267,7 +267,7 @@ For local browser development:
 
 ```env
 FRONTEND_ORIGIN=http://localhost:5173
-VITE_API_BASE_URL=http://localhost:3001/api
+VITE_API_BASE_URL=/api
 ```
 
 For Telegram testing via tunnel or production, update these to your real domains.
@@ -304,67 +304,54 @@ The backend will create/use the demo user from seed data.
 
 ### Real Telegram Mini App testing
 
-Use a public HTTPS tunnel or deployed frontend:
+Use a public HTTPS URL that serves the Mini App:
 
-1. expose the frontend over HTTPS
+1. expose the app over HTTPS
 2. set `WEBAPP_URL` to that HTTPS URL
-3. set `FRONTEND_ORIGIN` to the same origin
-4. restart bot + backend + frontend
+3. set `FRONTEND_ORIGIN` only if the frontend origin differs from `WEBAPP_URL`
+4. restart the service or local processes
 
 ## Deployment
 
-Recommended split:
+Recommended deployment:
 
-- `frontend`: static hosting, e.g. Vercel / Netlify / S3 + CDN
-- `backend`: Node service, e.g. Railway / Render / Fly.io / VPS
-- `bot`: separate long-running Node worker
-- `database`: managed PostgreSQL
+- single service for `backend + bot + built frontend`
+- one PostgreSQL service
 
 ### Railway / Railpack Notes
 
-This repository is a monorepo. The root package now exposes a default production start command:
+This repository can now run as a single Railway service. The backend serves the built Mini App from `app/frontend/dist`, while the same process also exposes the API.
+
+Default production commands:
 
 ```bash
-pnpm start
+Build: pnpm build
+Start: pnpm start
 ```
 
-By default that starts both long-running production processes:
-
-```bash
-pnpm start
-```
-
-Under the hood:
+What `pnpm start` runs:
 
 - backend: `pnpm start:backend`
 - bot: `pnpm start:bot`
 
-Useful Railway commands by service:
+Recommended single-service Railway variables:
 
-- backend build: `pnpm build:backend`
-- backend start only: `pnpm start:backend`
-- bot build: `pnpm build:bot`
-- bot start: `pnpm start:bot`
-- frontend build: `pnpm build:frontend`
+- `WEBAPP_URL=https://your-backend-domain.up.railway.app`
+- `FRONTEND_ORIGIN` may be omitted and will fall back to `WEBAPP_URL` origin
+- `VITE_API_BASE_URL` may be omitted and already defaults to `/api`
 
-If you deploy the frontend as a static Railpack app, set:
-
-```env
-RAILPACK_SPA_OUTPUT_DIR=app/frontend/dist
-```
-
-and use the frontend build command above.
+Optional split deployment is still possible if you explicitly keep a separate frontend service.
 
 Production checklist:
 
 1. Provision PostgreSQL and set `DATABASE_URL`
 2. Set strong `JWT_SECRET`
-3. Deploy backend
-4. Deploy frontend over HTTPS
-5. Set `WEBAPP_URL` to the deployed frontend URL
-6. Set `FRONTEND_ORIGIN` on backend to the deployed frontend origin
+3. Deploy one Railway service from this repo with `pnpm build` and `pnpm start`
+4. Set `WEBAPP_URL` to that same service domain
+5. Set `FRONTEND_ORIGIN` only if it differs from `WEBAPP_URL`
+6. Optionally set `VITE_API_BASE_URL=/api` (already the default)
 7. Run `pnpm prisma:migrate`
-8. Start the bot process
+8. Ensure only one bot instance is running for the token
 
 Extra notes are in [docs/production-notes.md](./docs/production-notes.md).
 
@@ -404,3 +391,4 @@ pnpm prisma:migrate
 pnpm seed
 pnpm dev
 ```
+
