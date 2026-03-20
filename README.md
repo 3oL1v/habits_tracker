@@ -320,6 +320,36 @@ Recommended split:
 - `bot`: separate long-running Node worker
 - `database`: managed PostgreSQL
 
+### Railway / Railpack Notes
+
+This repository is a monorepo. The root package now exposes a default production start command:
+
+```bash
+pnpm start
+```
+
+By default that starts the backend service:
+
+```bash
+pnpm --filter @habit-tracker/backend start
+```
+
+Useful Railway commands by service:
+
+- backend build: `pnpm build:backend`
+- backend start: `pnpm start`
+- bot build: `pnpm build:bot`
+- bot start: `pnpm start:bot`
+- frontend build: `pnpm build:frontend`
+
+If you deploy the frontend as a static Railpack app, set:
+
+```env
+RAILPACK_SPA_OUTPUT_DIR=app/frontend/dist
+```
+
+and use the frontend build command above.
+
 Production checklist:
 
 1. Provision PostgreSQL and set `DATABASE_URL`
