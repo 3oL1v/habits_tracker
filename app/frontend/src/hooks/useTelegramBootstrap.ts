@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, ApiUser, setAuthToken } from "../lib/api";
-import { getTelegramWebApp } from "../lib/telegram";
+import { getTelegramWebApp, waitForTelegramInitData, waitForTelegramWebApp } from "../lib/telegram";
 
 const SESSION_TOKEN_KEY = "habit-tracker-session-token";
 
@@ -21,7 +21,7 @@ export function useTelegramBootstrap(): BootstrapState {
     let isMounted = true;
 
     async function bootstrap() {
-      const webApp = getTelegramWebApp();
+      const webApp = await waitForTelegramWebApp();
       webApp?.ready();
       webApp?.expand();
       webApp?.setHeaderColor?.("#fbf6f3");
@@ -30,9 +30,10 @@ export function useTelegramBootstrap(): BootstrapState {
       try {
         const storedToken = window.localStorage.getItem(SESSION_TOKEN_KEY);
         let user: ApiUser | null = null;
+        const initData = await waitForTelegramInitData();
 
-        if (webApp?.initData) {
-          const session = await api.authWithTelegram(webApp.initData);
+        if (initData) {
+          const session = await api.authWithTelegram(initData);
           window.localStorage.setItem(SESSION_TOKEN_KEY, session.token);
           setAuthToken(session.token);
           user = session.user;
@@ -44,7 +45,13 @@ export function useTelegramBootstrap(): BootstrapState {
           setAuthToken(session.token);
           user = session.user;
         } else {
-          throw new Error("Telegram init data is missing. Open the app inside Telegram or enable local dev auth.");
+          const availableWebApp = getTelegramWebApp();
+          const hasTelegramContext = Boolean(availableWebApp ?? window.Telegram);
+          throw new Error(
+            hasTelegramContext
+              ? "Telegram Mini App launched, but init data did not arrive. Close the webview, reopen it from a fresh /start message, and try again."
+              : "Telegram Mini App SDK is missing. Open the app from Telegram or enable local dev auth."
+          );
         }
 
         if (!user) {
