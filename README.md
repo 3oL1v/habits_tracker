@@ -156,38 +156,26 @@ cp .env.example .env
 pnpm install
 ```
 
-### 3. Start PostgreSQL
+### 3. Run local bootstrap
 
 ```bash
-pnpm db:up
+pnpm local:setup
 ```
 
-This uses `docker-compose.yml`. Docker is required locally.
+This command:
 
-### 4. Generate Prisma client
+- reads the root `.env`
+- tries to create the local PostgreSQL database from `DATABASE_URL` using the credentials from `.env`
+- generates Prisma Client
+- applies migrations
+- seeds demo data
 
-```bash
-pnpm prisma:generate
-```
+If you prefer Docker instead of a locally installed PostgreSQL service, run `pnpm db:up` first and then `pnpm local:setup`. If `pnpm local:setup` reports password authentication failure, update `DATABASE_URL` in `.env` to match your local PostgreSQL credentials.
 
-### 5. Apply migrations
-
-```bash
-pnpm prisma:migrate
-```
-
-### 6. Seed demo data
+### 4. Start the full workspace
 
 ```bash
-pnpm seed
-```
-
-The seed creates a demo user tied to `DEV_AUTH_TELEGRAM_ID` and adds sample habits + sleep logs.
-
-### 7. Start the full workspace
-
-```bash
-pnpm dev
+pnpm local:dev
 ```
 
 This runs:
@@ -196,10 +184,12 @@ This runs:
 - frontend on `http://localhost:5173`
 - bot in polling mode
 
+If `WEBAPP_URL=http://localhost:5173`, the bot uses a regular URL button so Telegram Desktop on the same computer can open the app in your browser.
+
 ## Useful Commands
 
 ```bash
-pnpm dev
+pnpm local:dev
 pnpm build
 pnpm typecheck
 pnpm lint
@@ -249,17 +239,13 @@ If you already have a token, paste it here. Do not commit the real token.
 
 ### 3. Set the Mini App URL
 
-In the same root `.env` file set:
+For local bot testing on the same computer, set:
 
 ```env
-WEBAPP_URL=https://your-single-service-domain.example
+WEBAPP_URL=http://localhost:5173
 ```
 
-Important:
-
-- Telegram Mini Apps require `HTTPS`
-- `localhost` is fine for browser development, but not for opening inside Telegram
-- for real Telegram testing you need a public HTTPS URL
+For a real Telegram Mini App session on mobile or another device, replace it with a public `HTTPS` URL.
 
 ### 4. Configure the frontend/backend origins
 
@@ -269,8 +255,6 @@ For local browser development:
 FRONTEND_ORIGIN=http://localhost:5173
 VITE_API_BASE_URL=/api
 ```
-
-For Telegram testing via tunnel or production, update these to your real domains.
 
 ### 5. Start the bot
 
@@ -282,13 +266,14 @@ On startup the bot will:
 
 - register `/start`
 - register `/app`
-- set the chat menu button to `WEBAPP_URL`
+- if `WEBAPP_URL` is localhost, send a regular URL button and skip the Telegram menu button
+- if `WEBAPP_URL` is public, use the Telegram Mini App button and menu button
 
 ### 6. Open the Mini App
 
-- Send `/start` to the bot
-- Tap `Open Habit Tracker`
-- or use the bot menu button
+- On Telegram Desktop on the same computer: send `/start` and click `Open Habit Tracker`
+- In a normal browser: open `http://localhost:5173`
+- For real Telegram Mini App testing on phone: use a public HTTPS tunnel or deployment
 
 ## Local Development Modes
 
@@ -389,6 +374,8 @@ If Docker is available locally, also run:
 pnpm db:up
 pnpm prisma:migrate
 pnpm seed
-pnpm dev
+pnpm local:dev
 ```
+
+
 

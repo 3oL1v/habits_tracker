@@ -3,7 +3,10 @@
   "private": true,
   "packageManager": "pnpm@10.8.1",
   "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "local:setup": "node scripts/local-setup.mjs",
     "dev": "concurrently -n backend,frontend,bot -c magenta,cyan,green \"pnpm --filter @habit-tracker/backend dev\" \"pnpm --filter @habit-tracker/frontend dev\" \"pnpm --filter @habit-tracker/bot dev\"",
+    "local:dev": "pnpm dev",
     "build": "pnpm --filter @habit-tracker/backend prisma:generate && pnpm -r build",
     "build:backend": "pnpm --filter @habit-tracker/backend build",
     "build:frontend": "pnpm --filter @habit-tracker/frontend build",
@@ -19,8 +22,7 @@
     "prisma:generate": "pnpm --filter @habit-tracker/backend prisma:generate",
     "prisma:migrate": "pnpm --filter @habit-tracker/backend prisma:migrate",
     "prisma:studio": "pnpm --filter @habit-tracker/backend prisma:studio",
-    "seed": "pnpm --filter @habit-tracker/backend seed",
-    "setup": "node scripts/setup.mjs"
+    "seed": "pnpm --filter @habit-tracker/backend seed"
   },
   "devDependencies": {
     "@eslint/js": "^9.23.0",

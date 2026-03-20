@@ -15,8 +15,7 @@ if (!fs.existsSync(envPath) && fs.existsSync(envExamplePath)) {
 }
 
 console.log("Next steps:");
-console.log("1. Start Postgres: pnpm db:up");
-console.log("2. Install deps: pnpm install");
-console.log("3. Generate Prisma client: pnpm prisma:generate");
-console.log("4. Run migrations: pnpm prisma:migrate");
-console.log("5. Seed demo data: pnpm seed");
+console.log("1. Install deps: pnpm install");
+console.log("2. Local bootstrap: pnpm local:setup");
+console.log("3. Start the workspace: pnpm local:dev");
+console.log("4. Open the frontend at http://localhost:5173");

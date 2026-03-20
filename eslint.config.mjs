@@ -14,6 +14,7 @@ export default tseslint.config(
       "**/*.cjs",
       "scripts/**",
       "app/frontend/vite.config.ts",
+      "app/backend/prisma.config.ts",
       "app/frontend/tailwind.config.ts"
     ]
   },
@@ -46,3 +47,4 @@ export default tseslint.config(
     }
   }
 );
+
