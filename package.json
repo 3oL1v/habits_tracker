@@ -4,7 +4,7 @@
   "packageManager": "pnpm@10.8.1",
   "scripts": {
     "dev": "concurrently -n backend,frontend,bot -c magenta,cyan,green \"pnpm --filter @habit-tracker/backend dev\" \"pnpm --filter @habit-tracker/frontend dev\" \"pnpm --filter @habit-tracker/bot dev\"",
-    "build": "pnpm -r build",
+    "build": "pnpm --filter @habit-tracker/backend prisma:generate && pnpm -r build",
     "build:backend": "pnpm --filter @habit-tracker/backend build",
     "build:frontend": "pnpm --filter @habit-tracker/frontend build",
     "build:bot": "pnpm --filter @habit-tracker/bot build",
